@@ -59,7 +59,7 @@
     "node": ">=6.5.0"
   },
   "dependencies": {
-    "awesome-module": "^1.1.0",
+    "awesome-module": "1.1.0",
     "email-addresses": "3.0.1",
     "ical.js": "github:linagora/ical.js#v1.1.2-#279-require-twice-protection",
     "q": "1.4.1",
