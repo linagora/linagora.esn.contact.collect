@@ -20,11 +20,12 @@ describe('The vcard module', function() {
       emailWithFullName = `${fullName} <${email}>`;
     });
 
-    it('should create a vcard with email property and uid', function() {
+    it('should create a vcard with email property, uid and email as fn when email does not contain name', function() {
       const vcard = module.emailToVcard(email);
 
       expect(vcard.getFirstPropertyValue('uid')).to.exist;
       expect(vcard.getFirstPropertyValue('email')).to.equal(email);
+      expect(vcard.getFirstPropertyValue('fn')).to.equal(email);
     });
 
     it('should create a vcard with email, uid and fn when email contains a name', function() {

@@ -20,7 +20,7 @@ module.exports = dependencies => {
       .then(collectEmails);
 
     function collectEmails() {
-      return Q.allSettled(event.emails.map(collectEmail));
+      return Q.all(event.emails.map(collectEmail));
     }
 
     function collectEmail(email) {
@@ -30,18 +30,20 @@ module.exports = dependencies => {
       return ifContactDoesNotExists()
         .then(getToken)
         .then(createContact)
-        .then(publishContact);
+        .then(publishContact)
+        .then(() => ({ email, collected: true }))
+        .catch(err => ({ email, collected: false, err}));
 
       function ifContactDoesNotExists() {
-        return Q.denodeify(contactModule.lib.search.searchContact)({userId: user.id, bookId: user.id, search: email}).then(result => {
-          if (result.total_hits !== 0) {
+        return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: email}).then(result => {
+          if (result.total_count !== 0) {
             throw new Error(`Contact with such email ${email} already exists`);
           }
         });
       }
 
       function createContact(token) {
-        return contactModule.lib.client({ ESNToken: token, user })
+        return contactModule.lib.client({ ESNToken: token.token, user })
           .addressbookHome(user.id)
           .addressbook(CONSTANTS.ADDRESSBOOK_NAME)
           .vcard(contactId)
@@ -64,7 +66,7 @@ module.exports = dependencies => {
       return (event.userId ? Q.denodeify(userModule.get)(event.userId) : Q.denodeify(userModule.findByEmail)(event.userEmail))
         .then(result => {
           if (!result) {
-            throw new Error('Can not find user');
+            throw new Error(`Can not find user ${event.userId || event.userEmail}`);
           }
           user = result;
         });

@@ -136,7 +136,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('contact', {
         lib: {
           search: {
-            searchContact: searchSpy
+            searchContacts: searchSpy
           },
           client: contactClient
         }
@@ -150,8 +150,8 @@ describe('The collector lib module', function() {
         });
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
-        expect(result[0].state).to.equal('rejected');
-        expect(result[0].reason.message).to.match(/Fail to search contact/);
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Fail to search contact/);
 
         done();
       }, done);
@@ -162,7 +162,7 @@ describe('The collector lib module', function() {
         callback(null, user);
       });
       const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_hits: 1});
+        callback(null, {total_count: 1});
       });
       const topicSpy = sinon.spy();
 
@@ -179,7 +179,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('contact', {
         lib: {
           search: {
-            searchContact: searchSpy
+            searchContacts: searchSpy
           },
           client: contactClient
         }
@@ -193,9 +193,9 @@ describe('The collector lib module', function() {
         });
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
-        expect(result[0].state).to.equal('rejected');
-        expect(result[0].reason.message).to.match(/Contact with such email/);
-        expect(result[0].reason.message).to.match(/already exists/);
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Contact with such email/);
+        expect(result[0].err.message).to.match(/already exists/);
 
         done();
       }, done);
@@ -206,7 +206,7 @@ describe('The collector lib module', function() {
         callback(null, user);
       });
       const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_hits: 0});
+        callback(null, {total_count: 0});
       });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
         callback();
@@ -227,7 +227,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('contact', {
         lib: {
           search: {
-            searchContact: searchSpy
+            searchContacts: searchSpy
           },
           client: contactClient
         }
@@ -242,8 +242,8 @@ describe('The collector lib module', function() {
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
-        expect(result[0].state).to.equal('rejected');
-        expect(result[0].reason.message).to.match(/Can not generate user token to collect contact/);
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Can not generate user token to collect contact/);
 
         done();
       }, done);
@@ -254,7 +254,7 @@ describe('The collector lib module', function() {
         callback(null, user);
       });
       const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_hits: 0});
+        callback(null, {total_count: 0});
       });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
         callback(new Error('I failed to generate token'));
@@ -275,7 +275,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('contact', {
         lib: {
           search: {
-            searchContact: searchSpy
+            searchContacts: searchSpy
           },
           client: contactCreateSpy
         }
@@ -290,8 +290,8 @@ describe('The collector lib module', function() {
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
-        expect(result[0].state).to.equal('rejected');
-        expect(result[0].reason.message).to.match(/I failed to generate token/);
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/I failed to generate token/);
 
         done();
       }, done);
@@ -302,7 +302,7 @@ describe('The collector lib module', function() {
         callback(null, user);
       });
       const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_hits: 0});
+        callback(null, {total_count: 0});
       });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
         callback(null, {token: 1});
@@ -327,7 +327,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('contact', {
         lib: {
           search: {
-            searchContact: searchSpy
+            searchContacts: searchSpy
           },
           client: contactClient
         }
@@ -342,8 +342,8 @@ describe('The collector lib module', function() {
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
-        expect(result[0].state).to.equal('rejected');
-        expect(result[0].reason.message).to.match(/I failed to create contact/);
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/I failed to create contact/);
 
         done();
       }, done);
@@ -354,7 +354,7 @@ describe('The collector lib module', function() {
         callback(null, user);
       });
       const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_hits: 0});
+        callback(null, {total_count: 0});
       });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
         callback(null, {token: 1});
@@ -384,7 +384,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('contact', {
         lib: {
           search: {
-            searchContact: searchSpy
+            searchContacts: searchSpy
           },
           client: contactClient
         }
@@ -400,7 +400,7 @@ describe('The collector lib module', function() {
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.have.been.called;
         expect(forwardSpy).to.have.been.called;
-        expect(result[0].state).to.equal('fulfilled');
+        expect(result[0].collected).to.be.true;
 
         done();
       }, done);

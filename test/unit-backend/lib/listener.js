@@ -77,7 +77,7 @@ describe('The listener lib module', function() {
           });
         });
         const collectSpy = sinon.spy(function() {
-          return Q.when();
+          return Q.when([]);
         });
 
         this.moduleHelpers.addDep('amqpClientProvider', {

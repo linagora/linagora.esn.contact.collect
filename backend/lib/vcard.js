@@ -20,6 +20,8 @@ function emailToVcard(email) {
     const name = trim(parsed.name).replace(/\s+/g, ' ');
 
     vcard.addPropertyWithValue('fn', name);
+  } else {
+    vcard.addPropertyWithValue('fn', parsed.address);
   }
 
   return vcard;

@@ -30,8 +30,11 @@ module.exports = dependencies => {
     log('New message received', jsonMessage);
 
     return collector.collect(jsonMessage)
-      .then(() => {
+      .then(results => {
         log('Successfully processed');
+        results.forEach(result => {
+          log(`${result.email} has been collected: ${result.collected} ${!result.collected ? result.err : ''}`);
+        });
         amqpClient.ack(originalMessage);
       })
       .catch(err => log('Failed to process message', err));
