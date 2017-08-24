@@ -26,7 +26,6 @@ module.exports = dependencies => {
     function collectEmail(email) {
       const card = vcard.emailToVcard(email);
       const contactId = card.getFirstPropertyValue('uid');
-      const addressbookName = getAddressBookName();
 
       return ifContactDoesNotExists()
         .then(getToken)
@@ -44,7 +43,7 @@ module.exports = dependencies => {
       function createContact(token) {
         return contactModule.lib.client({ ESNToken: token, user })
           .addressbookHome(user.id)
-          .addressbook(addressbookName)
+          .addressbook(CONSTANTS.ADDRESSBOOK_NAME)
           .vcard(contactId)
           .create(card);
       }
@@ -53,16 +52,12 @@ module.exports = dependencies => {
         pubsub.local.topic(CONSTANTS.EVENTS.CONTACT_ADDED).forward(pubsub.global, {
           contactId: contactId,
           bookHome: user.id,
-          bookName: addressbookName,
+          bookName: CONSTANTS.ADDRESSBOOK_NAME,
           bookId: user.id,
           vcard: card,
           user: user
         });
       }
-    }
-
-    function getAddressBookName() {
-      return `${user._id}_${CONSTANTS.ADDRESSBOOK_NAME_SUFFIX}`;
     }
 
     function getUser() {

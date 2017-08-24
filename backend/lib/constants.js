@@ -3,6 +3,6 @@ module.exports = {
     EXCHANGE_NAME: 'collector:email',
     CONTACT_ADDED: 'contacts:contact:add'
   },
-  ADDRESSBOOK_NAME_SUFFIX: 'collected',
+  ADDRESSBOOK_NAME: 'collected',
   TOKEN_TTL: 20000
 };
