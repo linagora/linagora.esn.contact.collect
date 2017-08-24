@@ -1,7 +1,6 @@
 const emailAddressParser = require('email-addresses');
 const ICAL = require('ical.js');
 const trim = require('trim');
-const utils = require('./utils');
 
 module.exports = {
   emailToVcard
@@ -9,7 +8,7 @@ module.exports = {
 
 function emailToVcard(email) {
   const parsed = emailAddressParser.parseOneAddress(email);
-  const id = utils.hashEmailAddress(parsed.address);
+  const id = encodeURIComponent(parsed.address);
   const vcard = new ICAL.Component('vcard');
   const emailProperty = vcard.addPropertyWithValue('email', parsed.address);
 
