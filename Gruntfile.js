@@ -38,16 +38,6 @@ module.exports = function(grunt) {
       all: {
         src: ['<%= eslint.all.src %>']
       },
-      css: {
-        options: {
-          rules: [
-            { pattern: /important;(\s*$|(?=\s+[^\/]))/, message: 'CSS important rules only allowed with explanatory comment' }
-          ]
-        },
-        src: [
-          'frontend/app/**/*.less'
-        ]
-      },
       quick: {
         src: ['<%= eslint.quick.src %>']
       }
@@ -81,7 +71,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-eslint');
   grunt.loadNpmTasks('grunt-wait-server');
 
-  grunt.registerTask('linters', 'Check code for lint', ['eslint:all', 'lint_pattern:all', 'lint_pattern:css']);
+  grunt.registerTask('linters', 'Check code for lint', ['eslint:all', 'lint_pattern:all']);
   grunt.registerTask('linters-dev', 'Check changed files for lint', ['prepare-quick-lint', 'eslint:quick', 'lint_pattern:quick']);
   grunt.registerTask('spawn-servers', 'spawn servers', ['shell:mongo', 'shell:redis']);
   grunt.registerTask('kill-servers', 'kill servers', ['shell:mongo:kill', 'shell:redis:kill']);
