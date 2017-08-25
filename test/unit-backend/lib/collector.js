@@ -114,6 +114,57 @@ describe('The collector lib module', function() {
       });
     });
 
+    it('should fail if email is undefined', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: [undefined] }).then(function(result) {
+        expect(getUserSpy).to.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Email can not be parsed/);
+        done();
+      }, done);
+    });
+
+    it('should fail if email is empty string', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: [''] }).then(function(result) {
+        expect(getUserSpy).to.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Email can not be parsed/);
+        done();
+      }, done);
+    });
+
+    it('should fail if email is not an email', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: ['not an email'] }).then(function(result) {
+        expect(getUserSpy).to.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Email can not be parsed/);
+        done();
+      }, done);
+    });
+
     it('should not create contact if search fails', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);

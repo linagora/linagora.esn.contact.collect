@@ -8,6 +8,11 @@ module.exports = {
 
 function emailToVcard(email) {
   const parsed = emailAddressParser.parseOneAddress(email);
+
+  if (!parsed) {
+    return;
+  }
+
   const id = encodeURIComponent(parsed.address);
   const vcard = new ICAL.Component('vcard');
   const emailProperty = vcard.addPropertyWithValue('email', parsed.address);

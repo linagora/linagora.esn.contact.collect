@@ -25,6 +25,11 @@ module.exports = dependencies => {
 
     function collectEmail(email) {
       const card = vcard.emailToVcard(email);
+
+      if (!card) {
+        return Promise.resolve({email, collected: false, err: new Error('Email can not be parsed (null, not email or empty)')});
+      }
+
       const contactId = card.getFirstPropertyValue('uid');
 
       return ifContactDoesNotExists()

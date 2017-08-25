@@ -35,5 +35,17 @@ describe('The vcard module', function() {
       expect(vcard.getFirstPropertyValue('email')).to.equal(email);
       expect(vcard.getFirstPropertyValue('fn')).to.equal(fullName);
     });
+
+    it('should return undefined when email is undefined', function() {
+      expect(module.emailToVcard()).to.be.undefined;
+    });
+
+    it('should return undefined when email is empty', function() {
+      expect(module.emailToVcard('')).to.be.undefined;
+    });
+
+    it('should return undefined when email is not an email', function() {
+      expect(module.emailToVcard('notanemail')).to.be.undefined;
+    });
   });
 });
