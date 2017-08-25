@@ -1,6 +1,6 @@
 'use strict';
 
-const MODULE_DIR_NAME = '/awesome.module.seed';
+const MODULE_DIR_NAME = '/linagora.esn.contact.collect';
 const MODULE_PREFIX = 'seed';
 
 module.exports = function(config) {
