@@ -21,7 +21,7 @@ const collectModule = new AwesomeModule(MODULE_NAME, {
     },
 
     start: function(dependencies, callback) {
-      this.listener.start();
+      this.amqpListener.start();
       callback();
     }
   }

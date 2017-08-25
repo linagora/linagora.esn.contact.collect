@@ -5,14 +5,14 @@ const sinon = require('sinon');
 const mockery = require('mockery');
 const CONSTANTS = require('../../../backend/lib/constants');
 
-describe('The listener lib module', function() {
+describe('The amqp-listener lib module', function() {
   let jsonMessage, originalMessage;
 
   beforeEach(function() {
     jsonMessage = {id: 1};
     originalMessage = {foo: 'bar'};
     this.requireModule = function() {
-      return require('../../../backend/lib/listener')(this.moduleHelpers.dependencies);
+      return require('../../../backend/lib/amqp-listener')(this.moduleHelpers.dependencies);
     };
   });
 
