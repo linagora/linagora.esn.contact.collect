@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const Q = require('q');
 const CONSTANTS = require('./constants');
 const vcard = require('./vcard');
@@ -20,7 +21,7 @@ module.exports = dependencies => {
       .then(collectEmails);
 
     function collectEmails() {
-      return Q.all(event.emails.map(collectEmail));
+      return Q.all(_.uniq(event.emails).map(collectEmail));
     }
 
     function collectEmail(email) {
@@ -33,6 +34,7 @@ module.exports = dependencies => {
       const contactId = card.getFirstPropertyValue('uid');
 
       return ifContactDoesNotExists()
+        .then(ifNotUser)
         .then(getToken)
         .then(createContact)
         .then(publishContact)
@@ -43,6 +45,14 @@ module.exports = dependencies => {
         return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: email}).then(result => {
           if (result.total_count !== 0) {
             throw new Error(`Contact with such email ${email} already exists`);
+          }
+        });
+      }
+
+      function ifNotUser() {
+        return Q.denodeify(userModule.findByEmail)(email).then(result => {
+          if (result) {
+            throw new Error(`${email} is a user and will not be collected`);
           }
         });
       }

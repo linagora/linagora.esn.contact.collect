@@ -218,7 +218,10 @@ describe('The collector lib module', function() {
       const topicSpy = sinon.spy();
 
       this.moduleHelpers.addDep('user', {
-        get: getUserSpy
+        get: getUserSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
       });
 
       this.moduleHelpers.addDep('pubsub', {
@@ -252,6 +255,95 @@ describe('The collector lib module', function() {
       }, done);
     });
 
+    it('should not create contact if email is from a user', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+      const searchSpy = sinon.spy(function(query, callback) {
+        callback(null, {total_count: 0});
+      });
+      const topicSpy = sinon.spy();
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        findByEmail: function(email, callback) {
+          if (email === emails[0]) {
+            return callback(null, {id: email});
+          }
+          callback();
+        }
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          search: {
+            searchContacts: searchSpy
+          },
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchSpy).to.have.been.calledOnce;
+        expect(contactCreateSpy).to.not.have.been.called;
+        expect(topicSpy).to.not.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/is a user and will not be collected/);
+
+        done();
+      }, done);
+    });
+
+    it('should remove dupes from the emails', function(done) {
+      emails.push(emails[0]);
+      emails.push(emails[0]);
+      emails.push(emails[0]);
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+      const searchSpy = sinon.spy(function(query, callback) {
+        callback(null, {total_count: 0});
+      });
+      const topicSpy = sinon.spy();
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          search: {
+            searchContacts: searchSpy
+          },
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(result.length).to.equal(1);
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchSpy).to.have.been.calledOnce;
+
+        done();
+      }, done);
+    });
+
     it('should fail if token can not be generated', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
@@ -266,7 +358,10 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('user', {
         get: getUserSpy,
-        getNewToken: getNewTokenSpy
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
       });
 
       this.moduleHelpers.addDep('pubsub', {
@@ -314,7 +409,10 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('user', {
         get: getUserSpy,
-        getNewToken: getNewTokenSpy
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
       });
 
       this.moduleHelpers.addDep('pubsub', {
@@ -366,7 +464,10 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('user', {
         get: getUserSpy,
-        getNewToken: getNewTokenSpy
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
       });
 
       this.moduleHelpers.addDep('pubsub', {
@@ -423,7 +524,10 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('user', {
         get: getUserSpy,
-        getNewToken: getNewTokenSpy
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
       });
 
       this.moduleHelpers.addDep('pubsub', {
