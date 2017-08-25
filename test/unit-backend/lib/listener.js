@@ -2,7 +2,6 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const Q = require('q');
 const mockery = require('mockery');
 const CONSTANTS = require('../../../backend/lib/constants');
 
@@ -21,7 +20,7 @@ describe('The listener lib module', function() {
     it('should create the AMQP client and subscribe to collect:emails', function(done) {
       const subscribeSpy = sinon.spy();
       const getClientSpy = sinon.spy(function() {
-        return Q.when({
+        return Promise.resolve({
           subscribe: subscribeSpy
         });
       });
@@ -43,7 +42,7 @@ describe('The listener lib module', function() {
 
     it('should not not reject if AMQP client creation fails', function(done) {
       const getClientSpy = sinon.spy(function() {
-        return Q.reject(new Error('I failed'));
+        return Promise.reject(new Error('I failed'));
       });
       const logSpy = sinon.spy(this.moduleHelpers.dependencies('logger'), 'error');
 
@@ -64,29 +63,29 @@ describe('The listener lib module', function() {
     });
 
     describe('The message handler', function() {
-      it('should collect message and ack it collector resolves', function(done) {
+      it('should collect message and ack it when handler resolves', function(done) {
         let messageHandler;
         const subscribeSpy = sinon.spy(function(event, handler) {
           messageHandler = handler;
         });
         const amqpClientAck = sinon.spy();
         const getClientSpy = sinon.spy(function() {
-          return Q.when({
+          return Promise.resolve({
             subscribe: subscribeSpy,
             ack: amqpClientAck
           });
         });
-        const collectSpy = sinon.spy(function() {
-          return Q.when([]);
+        const handleSpy = sinon.spy(function() {
+          return Promise.resolve([]);
         });
 
         this.moduleHelpers.addDep('amqpClientProvider', {
           getClient: getClientSpy
         });
 
-        mockery.registerMock('./collector', function() {
+        mockery.registerMock('./handler', function() {
           return {
-            collect: collectSpy
+            handle: handleSpy
           };
         });
 
@@ -95,7 +94,7 @@ describe('The listener lib module', function() {
           expect(subscribeSpy).to.have.been.calledWith(CONSTANTS.EVENTS.EXCHANGE_NAME, sinon.match.func);
 
           messageHandler(jsonMessage, originalMessage).then(function() {
-            expect(collectSpy).to.have.been.calledWith(jsonMessage);
+            expect(handleSpy).to.have.been.calledWith(jsonMessage);
             expect(amqpClientAck).to.have.been.calledWith(originalMessage);
             done();
           }, done);
@@ -111,22 +110,22 @@ describe('The listener lib module', function() {
         });
         const amqpClientAck = sinon.spy();
         const getClientSpy = sinon.spy(function() {
-          return Q.when({
+          return Promise.resolve({
             subscribe: subscribeSpy,
             ack: amqpClientAck
           });
         });
-        const collectSpy = sinon.spy(function() {
-          return Q.reject(new Error('I failed to collect data'));
+        const handleSpy = sinon.spy(function() {
+          return Promise.reject(new Error('I failed to collect data'));
         });
 
         this.moduleHelpers.addDep('amqpClientProvider', {
           getClient: getClientSpy
         });
 
-        mockery.registerMock('./collector', function() {
+        mockery.registerMock('./handler', function() {
           return {
-            collect: collectSpy
+            handle: handleSpy
           };
         });
 
@@ -135,7 +134,7 @@ describe('The listener lib module', function() {
           expect(subscribeSpy).to.have.been.calledWith(CONSTANTS.EVENTS.EXCHANGE_NAME, sinon.match.func);
 
           messageHandler(jsonMessage, originalMessage).then(function() {
-            expect(collectSpy).to.have.been.calledWith(jsonMessage);
+            expect(handleSpy).to.have.been.calledWith(jsonMessage);
             expect(amqpClientAck).to.not.have.been.called;
             done();
           }, done);

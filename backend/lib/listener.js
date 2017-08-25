@@ -1,10 +1,9 @@
 const EXCHANGE_NAME = require('./constants').EVENTS.EXCHANGE_NAME;
-const uuid = require('uuid/v4');
 
 module.exports = dependencies => {
   const amqpClientProvider = dependencies('amqpClientProvider');
   const logger = dependencies('logger');
-  const collector = require('./collector')(dependencies);
+  const handler = require('./handler')(dependencies);
   let amqpClient;
 
   return {
@@ -24,23 +23,8 @@ module.exports = dependencies => {
   }
 
   function messageHandler(jsonMessage, originalMessage) {
-    // for now, there is no id in the message, generate one to be able to track what's up
-    const id = uuid();
-
-    log('New message received', jsonMessage);
-
-    return collector.collect(jsonMessage)
-      .then(results => {
-        log('Successfully processed');
-        results.forEach(result => {
-          log(`${result.email} has been collected: ${result.collected} ${!result.collected ? result.err : ''}`);
-        });
-        amqpClient.ack(originalMessage);
-      })
-      .catch(err => log('Failed to process message', err));
-
-    function log(message, args) {
-      logger.debug(`ContactCollector [${id}] - ${message}`, args || '');
-    }
+    return handler.handle(jsonMessage)
+      .then(() => amqpClient.ack(originalMessage))
+      .catch(err => logger.error('Fail to process message', err));
   }
 };
