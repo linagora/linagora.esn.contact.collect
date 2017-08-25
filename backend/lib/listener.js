@@ -1,5 +1,5 @@
 const EXCHANGE_NAME = require('./constants').EVENTS.EXCHANGE_NAME;
-const uuid = require('node-uuid');
+const uuid = require('uuid/v4');
 
 module.exports = dependencies => {
   const amqpClientProvider = dependencies('amqpClientProvider');
@@ -25,7 +25,7 @@ module.exports = dependencies => {
 
   function messageHandler(jsonMessage, originalMessage) {
     // for now, there is no id in the message, generate one to be able to track what's up
-    const id = uuid.v4();
+    const id = uuid();
 
     log('New message received', jsonMessage);
 
