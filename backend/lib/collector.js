@@ -51,7 +51,7 @@ module.exports = dependencies => {
       }
 
       function publishContact() {
-        pubsub.local.topic(CONSTANTS.EVENTS.CONTACT_ADDED).forward(pubsub.global, {
+        pubsub.local.topic(contactModule.lib.constants.NOTIFICATIONS.CONTACT_ADDED).forward(pubsub.global, {
           contactId: contactId,
           bookHome: user.id,
           bookName: CONSTANTS.ADDRESSBOOK_NAME,

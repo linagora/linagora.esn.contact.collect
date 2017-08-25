@@ -383,6 +383,11 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('contact', {
         lib: {
+          constants: {
+            NOTIFICATIONS: {
+              CONTACT_ADDED: 'contact:add'
+            }
+          },
           search: {
             searchContacts: searchSpy
           },
