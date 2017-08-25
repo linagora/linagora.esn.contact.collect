@@ -2,8 +2,6 @@
 
 const AwesomeModule = require('awesome-module');
 const Dependency = AwesomeModule.AwesomeModuleDependency;
-const path = require('path');
-const glob = require('glob-all');
 const MODULE_NAME = 'linagora.esn.contact.collect';
 
 const collectModule = new AwesomeModule(MODULE_NAME, {
