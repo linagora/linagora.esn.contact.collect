@@ -15,94 +15,98 @@ module.exports = dependencies => {
 
   function collect(event) {
     logger.debug('Collecting contacts from', event);
-    let user;
 
-    return getUser()
-      .then(collectEmails);
+    return getUser(event)
+      .then(user => collectEmails(user, event.emails));
+  }
 
-    function collectEmails() {
-      return Q.all(_.uniq(event.emails).map(collectEmail));
+  function collectEmails(user, emails) {
+    logger.debug(`Collecting emails ${emails} for user ${user._id}`);
+
+    return Q.all(_.uniq(emails).map(collectEmail.bind(null, user)));
+  }
+
+  function collectEmail(user, email) {
+    logger.debug(`Collecting email ${email} for user ${user._id}`);
+
+    const card = vcard.emailToVcard(email);
+
+    if (!card) {
+      return Promise.resolve({email, collected: false, err: new Error('Email can not be parsed (null, not email or empty)')});
     }
 
-    function collectEmail(email) {
-      const card = vcard.emailToVcard(email);
+    const contactId = card.getFirstPropertyValue('uid');
 
-      if (!card) {
-        return Promise.resolve({email, collected: false, err: new Error('Email can not be parsed (null, not email or empty)')});
-      }
+    return checkContactDoesNotExists()
+      .then(checkNotUser)
+      .then(getToken.bind(null, user))
+      .then(createContact)
+      .then(publishContact)
+      .then(() => ({ email, collected: true }))
+      .catch(err => ({ email, collected: false, err}));
 
-      const contactId = card.getFirstPropertyValue('uid');
-
-      return ifContactDoesNotExists()
-        .then(ifNotUser)
-        .then(getToken)
-        .then(createContact)
-        .then(publishContact)
-        .then(() => ({ email, collected: true }))
-        .catch(err => ({ email, collected: false, err}));
-
-      function ifContactDoesNotExists() {
-        return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: email}).then(result => {
-          if (result.total_count !== 0) {
-            throw new Error(`Contact with such email ${email} already exists`);
-          }
-        });
-      }
-
-      function ifNotUser() {
-        return Q.denodeify(userModule.findByEmail)(email).then(result => {
-          if (result) {
-            throw new Error(`${email} is a user and will not be collected`);
-          }
-        });
-      }
-
-      function createContact(token) {
-        return contactModule.lib.client({ ESNToken: token.token, user })
-          .addressbookHome(user.id)
-          .addressbook(CONSTANTS.ADDRESSBOOK_NAME)
-          .vcard(contactId)
-          .create(card)
-          .then(result => {
-            if (result.response.statusCode === 204) {
-              throw new Error(`${email} already collected`);
-            }
-
-            return result;
-          });
-      }
-
-      function publishContact() {
-        pubsub.local.topic(contactModule.lib.constants.NOTIFICATIONS.CONTACT_ADDED).forward(pubsub.global, {
-          contactId: contactId,
-          bookHome: user.id,
-          bookName: CONSTANTS.ADDRESSBOOK_NAME,
-          bookId: user.id,
-          vcard: card,
-          user: user
-        });
-      }
+    function checkContactDoesNotExists() {
+      return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: email}).then(result => {
+        if (result.total_count !== 0) {
+          throw new Error(`Contact with such email ${email} already exists`);
+        }
+      });
     }
 
-    function getUser() {
-      return (event.userId ? Q.denodeify(userModule.get)(event.userId) : Q.denodeify(userModule.findByEmail)(event.userEmail))
+    function checkNotUser() {
+      return Q.denodeify(userModule.findByEmail)(email).then(result => {
+        if (result) {
+          throw new Error(`${email} is a user and will not be collected`);
+        }
+      });
+    }
+
+    function createContact(token) {
+      return contactModule.lib.client({ ESNToken: token.token, user })
+        .addressbookHome(user.id)
+        .addressbook(CONSTANTS.ADDRESSBOOK_NAME)
+        .vcard(contactId)
+        .create(card)
         .then(result => {
-          if (!result) {
-            throw new Error(`Can not find user ${event.userId || event.userEmail}`);
+          if (result.response.statusCode === 204) {
+            throw new Error(`${contactId} already collected`);
           }
-          user = result;
+
+          return result;
         });
     }
 
-    function getToken() {
-      return Q.denodeify(userModule.getNewToken)(user, CONSTANTS.TOKEN_TTL)
-        .then(token => {
-          if (!token) {
-            throw new Error('Can not generate user token to collect contact');
-          }
-
-          return token;
-        });
+    function publishContact() {
+      pubsub.local.topic(contactModule.lib.constants.NOTIFICATIONS.CONTACT_ADDED).forward(pubsub.global, {
+        contactId: contactId,
+        bookHome: user.id,
+        bookName: CONSTANTS.ADDRESSBOOK_NAME,
+        bookId: user.id,
+        vcard: card,
+        user: user
+      });
     }
+  }
+
+  function getToken(user) {
+    return Q.denodeify(userModule.getNewToken)(user, CONSTANTS.TOKEN_TTL)
+      .then(token => {
+        if (!token) {
+          throw new Error('Can not generate user token to collect contact');
+        }
+
+        return token;
+      });
+  }
+
+  function getUser(event) {
+    return (event.userId ? Q.denodeify(userModule.get)(event.userId) : Q.denodeify(userModule.findByEmail)(event.userEmail))
+      .then(result => {
+        if (!result) {
+          throw new Error(`Can not find user ${event.userId || event.userEmail}`);
+        }
+
+        return result;
+      });
   }
 };
