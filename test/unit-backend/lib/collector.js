@@ -501,6 +501,76 @@ describe('The collector lib module', function() {
       }, done);
     });
 
+    it('should not publish contact if it has already been collected', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+      const searchSpy = sinon.spy(function(query, callback) {
+        callback(null, {total_count: 0});
+      });
+      const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
+        callback(null, {token: 1});
+      });
+      const forwardSpy = sinon.spy();
+      const topicSpy = sinon.spy(function() {
+        return {
+          forward: forwardSpy
+        };
+      });
+
+      contactCreateSpy = sinon.spy(function() {
+        return Q.when({
+          response: {
+            statusCode: 204
+          }
+        });
+      });
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          constants: {
+            NOTIFICATIONS: {
+              CONTACT_ADDED: 'contact:add'
+            }
+          },
+          search: {
+            searchContacts: searchSpy
+          },
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchSpy).to.have.been.calledOnce;
+        expect(searchSpy).to.have.been.calledWith({
+          userId: user.id, bookId: user.id, search: email1
+        });
+        expect(getNewTokenSpy).to.have.been.calledWith(user);
+        expect(contactCreateSpy).to.have.been.called;
+        expect(topicSpy).to.not.have.been.called;
+        expect(forwardSpy).to.not.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/already collected/);
+
+        done();
+      }, done);
+    });
+
     it('should publish newly created contact in pubsub if all is OK', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
@@ -519,7 +589,11 @@ describe('The collector lib module', function() {
       });
 
       contactCreateSpy = sinon.spy(function() {
-        return Q.when({});
+        return Q.when({
+          response: {
+            statusCode: 200
+          }
+        });
       });
 
       this.moduleHelpers.addDep('user', {

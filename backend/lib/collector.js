@@ -62,7 +62,14 @@ module.exports = dependencies => {
           .addressbookHome(user.id)
           .addressbook(CONSTANTS.ADDRESSBOOK_NAME)
           .vcard(contactId)
-          .create(card);
+          .create(card)
+          .then(result => {
+            if (result.response.statusCode === 204) {
+              throw new Error(`${email} already collected`);
+            }
+
+            return result;
+          });
       }
 
       function publishContact() {
