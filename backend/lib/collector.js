@@ -16,6 +16,14 @@ module.exports = dependencies => {
   function collect(event) {
     logger.debug('Collecting contacts from', event);
 
+    if (!event) {
+      return Promise.reject(new Error('Event is required'));
+    }
+
+    if (!event.emails) {
+      return Promise.reject(new Error('Emails array is required'));
+    }
+
     return getUser(event)
       .then(user => collectEmails(user, event.emails));
   }

@@ -36,6 +36,24 @@ describe('The collector lib module', function() {
   });
 
   describe('The collect function', function() {
+    it('should fail if event is undefined', function(done) {
+      collector(this.moduleHelpers.dependencies).collect().then(function() {
+        done(new Error('should not be called'));
+      }, function(err) {
+        expect(err.message).to.match(/Event is required/);
+        done();
+      });
+    });
+
+    it('should fail if event.emails is undefined', function(done) {
+      collector(this.moduleHelpers.dependencies).collect({}).then(function() {
+        done(new Error('should not be called'));
+      }, function(err) {
+        expect(err.message).to.match(/Emails array is required/);
+        done();
+      });
+    });
+
     it('should fail if user can not be resolved from event.userId', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback();
@@ -45,7 +63,25 @@ describe('The collector lib module', function() {
         get: getUserSpy
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId }).then(function() {
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: [] }).then(function() {
+        done(new Error('should not be called'));
+      }, function(err) {
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(err.message).to.match(/Can not find user/);
+        done();
+      });
+    });
+
+    it('should fail if user can not be resolved from event.userId', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback();
+      });
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: [] }).then(function() {
         done(new Error('should not be called'));
       }, function(err) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
@@ -63,7 +99,7 @@ describe('The collector lib module', function() {
         get: getUserSpy
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId }).then(function() {
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: [] }).then(function() {
         done(new Error('should not be called'));
       }, function(err) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
@@ -83,7 +119,7 @@ describe('The collector lib module', function() {
         findByEmail: getUserFromEmailSpy
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userEmail: userEmail }).then(function() {
+      collector(this.moduleHelpers.dependencies).collect({ userEmail: userEmail, emails: [] }).then(function() {
         done(new Error('should not be called'));
       }, function(err) {
         expect(getUserSpy).to.not.have.been.called;
@@ -104,7 +140,7 @@ describe('The collector lib module', function() {
         findByEmail: getUserFromEmailSpy
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userEmail: userEmail }).then(function() {
+      collector(this.moduleHelpers.dependencies).collect({ userEmail: userEmail, emails: [] }).then(function() {
         done(new Error('should not be called'));
       }, function(err) {
         expect(getUserSpy).to.not.have.been.called;
