@@ -8,6 +8,11 @@ test:
   stage: test
   tags:
     - shell
+    - online.net
+    - mongo
+    - elasticsearch
+    - redis
+
   script:
    - npm i
    - npm update
