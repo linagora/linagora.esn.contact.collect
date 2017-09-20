@@ -90,7 +90,7 @@ module.exports = dependencies => {
         bookHome: user.id,
         bookName: CONSTANTS.ADDRESSBOOK_NAME,
         bookId: user.id,
-        vcard: card,
+        vcard: card.toJSON(),
         user: user
       });
     }
