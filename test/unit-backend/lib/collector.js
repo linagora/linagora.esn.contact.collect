@@ -670,6 +670,7 @@ describe('The collector lib module', function() {
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.have.been.called;
         expect(forwardSpy).to.have.been.called;
+        expect(forwardSpy.firstCall.args[1].vcard[0]).to.equal('vcard');
         expect(result[0].collected).to.be.true;
 
         done();
