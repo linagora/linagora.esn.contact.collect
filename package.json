@@ -1,6 +1,6 @@
 {
   "name": "linagora.esn.contact.collect",
-  "version": "0.5.6-dev",
+  "version": "0.5.6",
   "description": "Base module to collect email addresses as new contact",
   "main": "index.js",
   "devDependencies": {
