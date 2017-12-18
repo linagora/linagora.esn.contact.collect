@@ -16,131 +16,85 @@ describe('The amqp-listener lib module', function() {
     };
   });
 
-  describe('The start function', function() {
-    it('should create the AMQP client and subscribe to collect:emails', function(done) {
-      const subscribeSpy = sinon.spy();
-      const getClientSpy = sinon.spy(function() {
+  describe('start function', function() {
+
+    let ackSpy, getClientSpy, globalPubsubSpy, messageHandler;
+
+    beforeEach(function() {
+      ackSpy = sinon.spy();
+      getClientSpy = sinon.spy(function() {
         return Promise.resolve({
-          subscribe: subscribeSpy
+          ack: ackSpy
         });
       });
 
-      this.moduleHelpers.addDep('amqpClientProvider', {
-        getClient: getClientSpy
-      });
+      globalPubsubSpy = {
+        topic: topic => {
+          globalPubsubSpy.topicName = topic;
 
-      mockery.registerMock('./collector', function() {});
-
-      this.requireModule().start().then(function() {
-        expect(getClientSpy).to.have.been.calledOnce;
-        expect(subscribeSpy).to.have.been.calledWith(CONSTANTS.EVENTS.EXCHANGE_NAME);
-        done();
-      }, function() {
-        done(new Error('Should not be called'));
-      });
-    });
-
-    it('should not not reject if AMQP client creation fails', function(done) {
-      const getClientSpy = sinon.spy(function() {
-        return Promise.reject(new Error('I failed'));
-      });
-      const logSpy = sinon.spy(this.moduleHelpers.dependencies('logger'), 'error');
-
-      this.moduleHelpers.addDep('amqpClientProvider', {
-        getClient: getClientSpy
-      });
-
-      mockery.registerMock('./collector', function() {});
-
-      this.requireModule().start().then(function(result) {
-        expect(getClientSpy).to.have.been.called;
-        expect(result).to.be.empty;
-        expect(logSpy).to.have.been.calledOnce;
-        done();
-      }, function() {
-        done(new Error('Should not be called'));
-      });
-    });
-
-    describe('The message handler', function() {
-      it('should collect message and ack it when handler resolves', function(done) {
-        let messageHandler;
-        const subscribeSpy = sinon.spy(function(event, handler) {
+          return globalPubsubSpy;
+        },
+        subscribe: sinon.spy(handler => {
           messageHandler = handler;
-        });
-        const amqpClientAck = sinon.spy();
-        const getClientSpy = sinon.spy(function() {
-          return Promise.resolve({
-            subscribe: subscribeSpy,
-            ack: amqpClientAck
-          });
-        });
+        })
+      };
+
+      this.moduleHelpers.addDep('amqpClientProvider', {
+        getClient: getClientSpy
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        global: globalPubsubSpy
+      });
+    });
+
+    it('should subscribe to global pubsub\'s collect:emails', function() {
+      mockery.registerMock('./collector', function() {});
+
+      this.requireModule().start();
+      expect(globalPubsubSpy.topicName).to.equal(CONSTANTS.EVENTS.EXCHANGE_NAME);
+      expect(globalPubsubSpy.subscribe).to.have.been.calledOnce;
+    });
+
+    describe('message handler', function() {
+      it('should collect message and ack it when handler resolves', function(done) {
         const handleSpy = sinon.spy(function() {
           return Promise.resolve([]);
         });
 
-        this.moduleHelpers.addDep('amqpClientProvider', {
-          getClient: getClientSpy
-        });
-
         mockery.registerMock('./handler', function() {
           return {
             handle: handleSpy
           };
         });
 
-        this.requireModule().start().then(function() {
-          expect(getClientSpy).to.have.been.calledOnce;
-          expect(subscribeSpy).to.have.been.calledWith(CONSTANTS.EVENTS.EXCHANGE_NAME, sinon.match.func);
+        this.requireModule().start();
 
-          messageHandler(jsonMessage, originalMessage).then(function() {
-            expect(handleSpy).to.have.been.calledWith(jsonMessage);
-            expect(amqpClientAck).to.have.been.calledWith(originalMessage);
-            done();
-          }, done);
-        }, function() {
-          done(new Error('Should not be called'));
-        });
+        messageHandler(jsonMessage, originalMessage).then(function() {
+          expect(handleSpy).to.have.been.calledWith(jsonMessage);
+          expect(ackSpy).to.have.been.calledWith(originalMessage);
+          done();
+        }).catch(done);
+
       });
 
       it('should not ack the message when collector rejects', function(done) {
-        let messageHandler;
-        const subscribeSpy = sinon.spy(function(event, handler) {
-          messageHandler = handler;
-        });
-        const amqpClientAck = sinon.spy();
-        const getClientSpy = sinon.spy(function() {
-          return Promise.resolve({
-            subscribe: subscribeSpy,
-            ack: amqpClientAck
-          });
-        });
         const handleSpy = sinon.spy(function() {
           return Promise.reject(new Error('I failed to collect data'));
         });
 
-        this.moduleHelpers.addDep('amqpClientProvider', {
-          getClient: getClientSpy
-        });
-
         mockery.registerMock('./handler', function() {
           return {
             handle: handleSpy
           };
         });
 
-        this.requireModule().start().then(function() {
-          expect(getClientSpy).to.have.been.calledOnce;
-          expect(subscribeSpy).to.have.been.calledWith(CONSTANTS.EVENTS.EXCHANGE_NAME, sinon.match.func);
-
-          messageHandler(jsonMessage, originalMessage).then(function() {
-            expect(handleSpy).to.have.been.calledWith(jsonMessage);
-            expect(amqpClientAck).to.not.have.been.called;
-            done();
-          }, done);
-        }, function() {
-          done(new Error('Should not be called'));
-        });
+        this.requireModule().start();
+        messageHandler(jsonMessage, originalMessage).then(function() {
+          expect(handleSpy).to.have.been.calledWith(jsonMessage);
+          expect(ackSpy).to.not.have.been.called;
+          done();
+        }).catch(done);
       });
     });
   });
