@@ -37,7 +37,7 @@ module.exports = dependencies => {
   function collectEmail(user, email) {
     logger.debug(`Collecting email ${email} for user ${user._id}`);
 
-    const card = vcard.emailToVcard(email);
+    const { vcard: card, parsedEmail } = vcard.emailToVcard(email);
 
     if (!card) {
       return Promise.resolve({email, collected: false, err: new Error('Email can not be parsed (null, not email or empty)')});
@@ -54,17 +54,17 @@ module.exports = dependencies => {
       .catch(err => ({ email, collected: false, err}));
 
     function checkContactDoesNotExists() {
-      return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: email}).then(result => {
+      return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: parsedEmail}).then(result => {
         if (result.total_count !== 0) {
-          throw new Error(`Contact with such email ${email} already exists`);
+          throw new Error(`Contact with such email ${parsedEmail} already exists`);
         }
       });
     }
 
     function checkNotUser() {
-      return Q.denodeify(userModule.findByEmail)(email).then(result => {
+      return Q.denodeify(userModule.findByEmail)(parsedEmail).then(result => {
         if (result) {
-          throw new Error(`${email} is a user and will not be collected`);
+          throw new Error(`${parsedEmail} is a user and will not be collected`);
         }
       });
     }

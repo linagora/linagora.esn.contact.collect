@@ -21,7 +21,7 @@ describe('The vcard module', function() {
     });
 
     it('should create a vcard with email property, uid and email as fn when email does not contain name', function() {
-      const vcard = module.emailToVcard(email);
+      const { vcard } = module.emailToVcard(email);
 
       expect(vcard.getFirstPropertyValue('uid')).to.exist;
       expect(vcard.getFirstPropertyValue('email')).to.equal(email);
@@ -29,7 +29,7 @@ describe('The vcard module', function() {
     });
 
     it('should create a vcard with email, uid and fn when email contains a name', function() {
-      const vcard = module.emailToVcard(emailWithFullName);
+      const { vcard } = module.emailToVcard(emailWithFullName);
 
       expect(vcard.getFirstPropertyValue('uid')).to.exist;
       expect(vcard.getFirstPropertyValue('email')).to.equal(email);
@@ -37,15 +37,21 @@ describe('The vcard module', function() {
     });
 
     it('should return undefined when email is undefined', function() {
-      expect(module.emailToVcard()).to.be.undefined;
+      const { vcard } = module.emailToVcard();
+
+      expect(vcard).to.be.undefined;
     });
 
     it('should return undefined when email is empty', function() {
-      expect(module.emailToVcard('')).to.be.undefined;
+      const { vcard } = module.emailToVcard('');
+
+      expect(vcard).to.be.undefined;
     });
 
     it('should return undefined when email is not an email', function() {
-      expect(module.emailToVcard('notanemail')).to.be.undefined;
+      const { vcard } = module.emailToVcard('notanemail');
+
+      expect(vcard).to.be.undefined;
     });
   });
 });

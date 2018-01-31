@@ -11,7 +11,7 @@ function emailToVcard(email) {
   const parsed = emailAddressParser.parseOneAddress(email);
 
   if (!parsed) {
-    return;
+    return { vcard: undefined, parsedEmail: undefined };
   }
 
   const id = uuid();
@@ -30,5 +30,5 @@ function emailToVcard(email) {
     vcard.addPropertyWithValue('fn', parsed.address);
   }
 
-  return vcard;
+  return { vcard, parsedEmail: parsed.address };
 }
