@@ -3,3 +3,4 @@ frontend/components
 .idea
 *.log
 package-lock.json
+.vscode
