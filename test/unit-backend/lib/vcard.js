@@ -36,6 +36,12 @@ describe('The vcard module', function() {
       expect(vcard.getFirstPropertyValue('fn')).to.equal(fullName);
     });
 
+    it('should create a vcard with firstName and lastName', function() {
+      const { vcard } = module.emailToVcard(emailWithFullName);
+
+      expect(vcard.getFirstPropertyValue('n')).to.deep.equal([lastName, firstName]);
+    });
+
     it('should return undefined when email is undefined', function() {
       const { vcard } = module.emailToVcard();
 

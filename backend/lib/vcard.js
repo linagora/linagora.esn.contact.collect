@@ -24,8 +24,12 @@ function emailToVcard(email) {
 
   if (parsed.name) {
     const name = trim(parsed.name).replace(/\s+/g, ' ');
+    const words = name.split(' ');
+    const firstName = words[0];
+    const lastName = words.slice(1).join(' ');
 
     vcard.addPropertyWithValue('fn', name);
+    vcard.addPropertyWithValue('n', [lastName, firstName]);
   } else {
     vcard.addPropertyWithValue('fn', parsed.address);
   }
