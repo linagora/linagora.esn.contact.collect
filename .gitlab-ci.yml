@@ -16,4 +16,5 @@ test:
   script:
    - npm i
    - npm update
+   - bower i --allow-root
    - grunt

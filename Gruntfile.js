@@ -48,6 +48,32 @@ module.exports = function(grunt) {
       redis: shell.newShell(command.redis, /on port/, 'Redis server is started')
     },
 
+    i18n_checker: {
+      all: {
+        options: {
+          baseDir: __dirname,
+          dirs: [{
+            localeDir: 'backend/lib/i18n/locales',
+            core: true
+          }],
+          verifyOptions: {
+            defaultLocale: 'en',
+            locales: ['en', 'fr', 'vi'],
+            rules: [
+              'all-keys-translated',
+              'all-locales-present',
+              'default-locale-translate',
+              'key-trimmed',
+              'no-duplicate-among-modules',
+              'no-duplicate-with-core',
+              'no-untranslated-key',
+              'valid-json-file'
+            ]
+          }
+        }
+      }
+    },
+
     run_grunt: {
       midway_backend: runGrunt.newProcess(['test-midway-backend']),
       unit_backend: runGrunt.newProcess(['test-unit-backend']),
@@ -68,10 +94,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-shell-spawn');
   grunt.loadNpmTasks('grunt-continue');
   grunt.loadNpmTasks('@linagora/grunt-run-grunt');
+  grunt.loadNpmTasks('@linagora/grunt-i18n-checker');
   grunt.loadNpmTasks('grunt-eslint');
   grunt.loadNpmTasks('grunt-wait-server');
 
-  grunt.registerTask('linters', 'Check code for lint', ['eslint:all', 'lint_pattern:all']);
+  grunt.registerTask('i18n', 'Check the translation files', ['i18n_checker']);
+  grunt.registerTask('linters', 'Check code for lint', ['eslint:all', 'lint_pattern:all', 'i18n']);
   grunt.registerTask('linters-dev', 'Check changed files for lint', ['prepare-quick-lint', 'eslint:quick', 'lint_pattern:quick']);
   grunt.registerTask('spawn-servers', 'spawn servers', ['shell:mongo', 'shell:redis']);
   grunt.registerTask('kill-servers', 'kill servers', ['shell:mongo:kill', 'shell:redis:kill']);
@@ -81,6 +109,6 @@ module.exports = function(grunt) {
   grunt.registerTask('test-midway-backend', ['setup-environment', 'setup-servers', 'run_grunt:midway_backend', 'kill-servers', 'clean-environment']);
   grunt.registerTask('test-unit-backend', 'Test backend code', ['run_grunt:unit_backend']);
   grunt.registerTask('test-unit-frontend', 'Test frontend code', ['run_grunt:unit_frontend']);
-  grunt.registerTask('test', ['linters', 'test-unit-backend']);
+  grunt.registerTask('test', ['linters', 'test-unit-frontend', 'test-unit-backend']);
   grunt.registerTask('default', ['test']);
 };

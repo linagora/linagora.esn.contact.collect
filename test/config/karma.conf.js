@@ -1,7 +1,6 @@
 'use strict';
 
 const MODULE_DIR_NAME = '/linagora.esn.contact.collect';
-const MODULE_PREFIX = 'seed';
 
 module.exports = function(config) {
   config.set({
@@ -18,12 +17,14 @@ module.exports = function(config) {
       'frontend/components/restangular/dist/restangular.min.js',
       'frontend/components/lodash/dist/lodash.min.js',
       'frontend/components/sinon-chai/lib/sinon-chai.js',
-      'frontend/components/sinon-1.15.4/index.js',
+      'node_modules/sinon/pkg/sinon.js',
       'test/config/mocks.js',
-      `frontend/app/${MODULE_PREFIX}.app.js`,
+      'frontend/app/**/*.module.js',
       'frontend/app/**/*.js',
-      'frontend/app/**/*.jade',
-      'frontend/app/*.js'
+      'frontend/app/**/*.pug'
+    ],
+    exclude: [
+      'frontend/app/app.run.js'
     ],
     frameworks: ['mocha'],
     colors: true,
@@ -32,8 +33,8 @@ module.exports = function(config) {
     browsers: ['PhantomJS', 'Chrome', 'Firefox'],
     reporters: ['coverage', 'spec'],
     preprocessors: {
-      'frontend/app/**/*.js': ['coverage'],
-      '**/*.jade': ['ng-jade2module']
+      'frontend/app/**/!(*spec).js': ['coverage'],
+      'frontend/app/**/*.pug': ['ng-jade2module']
     },
 
     plugins: [
