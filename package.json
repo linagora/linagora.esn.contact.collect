@@ -4,6 +4,8 @@
   "description": "Base module to collect email addresses as new contact",
   "main": "index.js",
   "devDependencies": {
+    "@linagora/grunt-i18n-checker": "2.0.5",
+    "@linagora/i18n-checker": "2.0.3",
     "chai": "3.5.0",
     "chai-as-promised": "5.3.0",
     "chai-shallow-deep-equal": "1.4.0",
@@ -47,7 +49,8 @@
     "time-grunt": "1.4.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "postinstall": "bower install --production --allow-root"
   },
   "repository": {
     "type": "git",
@@ -60,7 +63,9 @@
   },
   "dependencies": {
     "awesome-module": "1.1.0",
+    "bower": "1.8.2",
     "email-addresses": "3.0.1",
+    "glob-all": "3.1.0",
     "ical.js": "github:linagora/ical.js#v1.1.2-#279-require-twice-protection",
     "lodash": "4.15.0",
     "q": "1.4.1",

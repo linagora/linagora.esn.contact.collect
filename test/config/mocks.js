@@ -1,6 +1,7 @@
 'use strict';
 
 angular.module('esn.form.helper', []);
+angular.module('linagora.esn.contact', []);
 angular.module('pascalprecht.translate', [])
   .provider('$translate', function() {
     return {
