@@ -3,6 +3,7 @@ before_script:
 
 stages:
   - test
+  - deploy_dev
 
 test:
   stage: test
@@ -18,3 +19,27 @@ test:
    - npm update
    - bower i --allow-root
    - grunt
+
+deploy_dev:
+  stage: deploy_dev
+  tags:
+    - dev.open-paas.org
+    - deployment
+  variables:
+    GIT_STRATEGY: none
+  environment:
+    name: dev
+    url: https://dev.open-paas.org
+  only:
+    - master@linagora/lgs/openpaas/linagora.esn.contact.collect
+  script:
+    - cd /srv/${CI_PROJECT_NAME}
+    - git fetch --all
+    - git checkout ${CI_COMMIT_SHA}
+    - npm install --production
+    - npm update --production
+    - npm prune
+    - bower install --production
+    - bower prune
+    - git checkout -- .
+    - sudo /etc/init.d/rse.dev restart
