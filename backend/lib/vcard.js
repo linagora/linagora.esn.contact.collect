@@ -1,5 +1,5 @@
 const emailAddressParser = require('email-addresses');
-const ICAL = require('ical.js');
+const ICAL = require('@linagora/ical.js');
 const trim = require('trim');
 const uuid = require('uuid/v4');
 
