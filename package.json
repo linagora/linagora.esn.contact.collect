@@ -62,11 +62,12 @@
     "node": ">=6.5.0"
   },
   "dependencies": {
+    "@linagora/ical.js": "1.1.4",
     "awesome-module": "1.1.0",
     "bower": "1.8.2",
     "email-addresses": "3.0.1",
+    "express": "4.14.0",
     "glob-all": "3.1.0",
-    "ical.js": "github:linagora/ical.js#v1.1.2-#279-require-twice-protection",
     "lodash": "4.15.0",
     "q": "1.4.1",
     "trim": "0.0.1",
