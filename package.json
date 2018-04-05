@@ -62,7 +62,7 @@
     "node": ">=6.5.0"
   },
   "dependencies": {
-    "@linagora/ical.js": "1.1.4",
+    "@linagora/ical.js": "1.2.3",
     "awesome-module": "1.1.0",
     "bower": "1.8.2",
     "email-addresses": "3.0.1",
