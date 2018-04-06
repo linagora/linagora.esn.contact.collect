@@ -8,7 +8,7 @@
     ) {
       var CollectAddressbookDisplayShell = function(shell) {
         this.shell = shell;
-        this.icon = 'mdi-book-multiple';
+        this.icon = 'mdi-archive';
         this.displayName = shell.name || esnI18nService.translate('Collected contacts').toString();
       };
 
