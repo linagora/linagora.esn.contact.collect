@@ -10,11 +10,17 @@
   function registerAddressbookDisplayShell(
     contactAddressbookDisplayShellRegistry,
     contactCollectAddressbookService,
-    ContactCollectAddressbookDisplayShell
+    ContactCollectAddressbookDisplayShell,
+    contactAddressbookActionEdit,
+    contactAddressbookActionDelete
   ) {
     contactAddressbookDisplayShellRegistry.add({
       id: MODULE_NAME,
       priority: 10,
+      actions: [
+        contactAddressbookActionEdit,
+        contactAddressbookActionDelete
+      ],
       displayShell: ContactCollectAddressbookDisplayShell,
       matchingFunction: contactCollectAddressbookService.isCollectedAddressbook
     });
