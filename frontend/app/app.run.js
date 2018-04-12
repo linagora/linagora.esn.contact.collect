@@ -12,14 +12,16 @@
     contactCollectAddressbookService,
     ContactCollectAddressbookDisplayShell,
     contactAddressbookActionEdit,
-    contactAddressbookActionDelete
+    contactAddressbookActionDelete,
+    contactAddressbookActionSettings
   ) {
     contactAddressbookDisplayShellRegistry.add({
       id: MODULE_NAME,
       priority: 10,
       actions: [
         contactAddressbookActionEdit,
-        contactAddressbookActionDelete
+        contactAddressbookActionDelete,
+        contactAddressbookActionSettings
       ],
       displayShell: ContactCollectAddressbookDisplayShell,
       matchingFunction: contactCollectAddressbookService.isCollectedAddressbook
