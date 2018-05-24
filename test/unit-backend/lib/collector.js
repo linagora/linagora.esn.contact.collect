@@ -6,7 +6,7 @@ const Q = require('q');
 
 describe('The collector lib module', function() {
   let collector, userId, userEmail, user, emails, email1;
-  let contactClient, contactCreateSpy;
+  let contactClient, contactCreateSpy, searchContactsSpy;
 
   beforeEach(function() {
     userId = '1';
@@ -15,6 +15,7 @@ describe('The collector lib module', function() {
     email1 = 'user1@open-paas.org';
     emails = [email1];
     contactCreateSpy = sinon.spy();
+    searchContactsSpy = sinon.spy();
     contactClient = function() {
       return {
         addressbookHome: function() {
@@ -27,7 +28,8 @@ describe('The collector lib module', function() {
                   };
                 }
               };
-            }
+            },
+            search: searchContactsSpy
           };
         }
       };
@@ -201,193 +203,11 @@ describe('The collector lib module', function() {
       }, done);
     });
 
-    it('should not create contact if search fails', function(done) {
-      const getUserSpy = sinon.spy(function(userId, callback) {
-        callback(null, user);
-      });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(new Error('Fail to search contact'));
-      });
-      const topicSpy = sinon.spy();
-
-      this.moduleHelpers.addDep('user', {
-        get: getUserSpy
-      });
-
-      this.moduleHelpers.addDep('pubsub', {
-        local: {
-          topic: topicSpy
-        }
-      });
-
-      this.moduleHelpers.addDep('contact', {
-        lib: {
-          search: {
-            searchContacts: searchSpy
-          },
-          client: contactClient
-        }
-      });
-
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
-        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
-        expect(contactCreateSpy).to.not.have.been.called;
-        expect(topicSpy).to.not.have.been.called;
-        expect(result[0].collected).to.be.false;
-        expect(result[0].err.message).to.match(/Fail to search contact/);
-
-        done();
-      }, done);
-    });
-
-    it('should not create contact if already exists', function(done) {
-      const getUserSpy = sinon.spy(function(userId, callback) {
-        callback(null, user);
-      });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 1});
-      });
-      const topicSpy = sinon.spy();
-
-      this.moduleHelpers.addDep('user', {
-        get: getUserSpy,
-        findByEmail: function(email, callback) {
-          callback();
-        }
-      });
-
-      this.moduleHelpers.addDep('pubsub', {
-        local: {
-          topic: topicSpy
-        }
-      });
-
-      this.moduleHelpers.addDep('contact', {
-        lib: {
-          search: {
-            searchContacts: searchSpy
-          },
-          client: contactClient
-        }
-      });
-
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
-        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
-        expect(contactCreateSpy).to.not.have.been.called;
-        expect(topicSpy).to.not.have.been.called;
-        expect(result[0].collected).to.be.false;
-        expect(result[0].err.message).to.match(/Contact with such email/);
-        expect(result[0].err.message).to.match(/already exists/);
-
-        done();
-      }, done);
-    });
-
-    it('should not create contact if email is from a user', function(done) {
-      const getUserSpy = sinon.spy(function(userId, callback) {
-        callback(null, user);
-      });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
-      });
-      const topicSpy = sinon.spy();
-
-      this.moduleHelpers.addDep('user', {
-        get: getUserSpy,
-        findByEmail: function(email, callback) {
-          if (email === emails[0]) {
-            return callback(null, {id: email});
-          }
-          callback();
-        }
-      });
-
-      this.moduleHelpers.addDep('pubsub', {
-        local: {
-          topic: topicSpy
-        }
-      });
-
-      this.moduleHelpers.addDep('contact', {
-        lib: {
-          search: {
-            searchContacts: searchSpy
-          },
-          client: contactClient
-        }
-      });
-
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
-        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(contactCreateSpy).to.not.have.been.called;
-        expect(topicSpy).to.not.have.been.called;
-        expect(result[0].collected).to.be.false;
-        expect(result[0].err.message).to.match(/is a user and will not be collected/);
-
-        done();
-      }, done);
-    });
-
-    it('should remove dupes from the emails', function(done) {
-      emails.push(emails[0]);
-      emails.push(emails[0]);
-      emails.push(emails[0]);
-      const getUserSpy = sinon.spy(function(userId, callback) {
-        callback(null, user);
-      });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
-      });
-      const topicSpy = sinon.spy();
-
-      this.moduleHelpers.addDep('user', {
-        get: getUserSpy,
-        findByEmail: function(email, callback) {
-          callback();
-        }
-      });
-
-      this.moduleHelpers.addDep('pubsub', {
-        local: {
-          topic: topicSpy
-        }
-      });
-
-      this.moduleHelpers.addDep('contact', {
-        lib: {
-          search: {
-            searchContacts: searchSpy
-          },
-          client: contactClient
-        }
-      });
-
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
-        expect(result.length).to.equal(1);
-        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-
-        done();
-      }, done);
-    });
-
     it('should fail if token can not be generated', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
       });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
-      });
-      const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
+      const getNewTokenSpy = sinon.spy((user, ttl, callback) => {
         callback();
       });
       const topicSpy = sinon.spy();
@@ -395,7 +215,7 @@ describe('The collector lib module', function() {
       this.moduleHelpers.addDep('user', {
         get: getUserSpy,
         getNewToken: getNewTokenSpy,
-        findByEmail: function(email, callback) {
+        findByEmail: (email, callback) => {
           callback();
         }
       });
@@ -408,25 +228,17 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('contact', {
         lib: {
-          search: {
-            searchContacts: searchSpy
-          },
           client: contactClient
         }
       });
 
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(result[0].collected).to.be.false;
         expect(result[0].err.message).to.match(/Can not generate user token to collect contact/);
-
         done();
       }, done);
     });
@@ -435,10 +247,7 @@ describe('The collector lib module', function() {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
       });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
-      });
-      const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
+      const getNewTokenSpy = sinon.spy((user, ttl, callback) => {
         callback(new Error('I failed to generate token'));
       });
       const topicSpy = sinon.spy();
@@ -459,25 +268,190 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('contact', {
         lib: {
-          search: {
-            searchContacts: searchSpy
-          },
           client: contactCreateSpy
         }
       });
 
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(result[0].collected).to.be.false;
         expect(result[0].err.message).to.match(/I failed to generate token/);
+        done();
+      }, done);
+    });
 
+    it('should not create contact if search fails', function(done) {
+      const getUserSpy = sinon.spy((userId, callback) => {
+        callback(null, user);
+      });
+      const getNewTokenSpy = sinon.spy((user, ttl, callback) => {
+        callback(null, { token: 1 });
+      });
+      const topicSpy = sinon.spy();
+
+      searchContactsSpy = sinon.stub().returns(Q.reject(new Error('Fail to search contact')));
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        getNewToken: getNewTokenSpy
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchContactsSpy).to.have.been.calledOnce;
+        expect(searchContactsSpy).to.have.been.calledWith({
+          search: email1
+        });
+        expect(contactCreateSpy).to.not.have.been.called;
+        expect(topicSpy).to.not.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Fail to search contact/);
+        done();
+      }, done);
+    });
+
+    it('should not create contact if already exists', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+      const getNewTokenSpy = sinon.spy((user, ttl, callback) => {
+        callback(null, { token: 1 });
+      });
+      const topicSpy = sinon.spy();
+
+      searchContactsSpy = sinon.stub().returns(Q.resolve({ total_count: 1 }));
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchContactsSpy).to.have.been.calledOnce;
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
+        expect(contactCreateSpy).to.not.have.been.called;
+        expect(topicSpy).to.not.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/Contact with such email/);
+        expect(result[0].err.message).to.match(/already exists/);
+        done();
+      }, done);
+    });
+
+    it('should not create contact if email is from a user', function(done) {
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+      const getNewTokenSpy = sinon.spy((user, ttl, callback) => {
+        callback(null, { token: 1 });
+      });
+      const topicSpy = sinon.spy();
+
+      searchContactsSpy = sinon.stub().returns(Q.resolve({ total_count: 0 }));
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          if (email === emails[0]) {
+            return callback(null, {id: email});
+          }
+          callback();
+        }
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchContactsSpy).to.have.been.calledOnce;
+        expect(contactCreateSpy).to.not.have.been.called;
+        expect(topicSpy).to.not.have.been.called;
+        expect(result[0].collected).to.be.false;
+        expect(result[0].err.message).to.match(/is a user and will not be collected/);
+        done();
+      }, done);
+    });
+
+    it('should remove dupes from the emails', function(done) {
+      emails.push(emails[0]);
+      emails.push(emails[0]);
+      emails.push(emails[0]);
+      const getUserSpy = sinon.spy(function(userId, callback) {
+        callback(null, user);
+      });
+      const topicSpy = sinon.spy();
+      const getNewTokenSpy = sinon.spy((user, ttl, callback) => {
+        callback(null, { token: 1 });
+      });
+
+      searchContactsSpy = sinon.stub().returns(Q.resolve({ total_count: 0 }));
+
+      this.moduleHelpers.addDep('user', {
+        get: getUserSpy,
+        getNewToken: getNewTokenSpy,
+        findByEmail: function(email, callback) {
+          callback();
+        }
+      });
+
+      this.moduleHelpers.addDep('pubsub', {
+        local: {
+          topic: topicSpy
+        }
+      });
+
+      this.moduleHelpers.addDep('contact', {
+        lib: {
+          client: contactClient
+        }
+      });
+
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+        expect(result.length).to.equal(1);
+        expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
+        expect(searchContactsSpy).to.have.been.calledOnce;
         done();
       }, done);
     });
@@ -486,14 +460,12 @@ describe('The collector lib module', function() {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
       });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
-      });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
-        callback(null, {token: 1});
+        callback(null, { token: 1 });
       });
       const topicSpy = sinon.spy();
 
+      searchContactsSpy = sinon.stub().returns(Q.resolve({ total_count: 0 }));
       contactCreateSpy = sinon.spy(function() {
         return Q.reject(new Error('I failed to create contact'));
       });
@@ -514,25 +486,19 @@ describe('The collector lib module', function() {
 
       this.moduleHelpers.addDep('contact', {
         lib: {
-          search: {
-            searchContacts: searchSpy
-          },
           client: contactClient
         }
       });
 
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
+        expect(searchContactsSpy).to.have.been.calledOnce;
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(result[0].collected).to.be.false;
         expect(result[0].err.message).to.match(/I failed to create contact/);
-
         done();
       }, done);
     });
@@ -540,9 +506,6 @@ describe('The collector lib module', function() {
     it('should not publish contact if it has already been collected', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
-      });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
       });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
         callback(null, {token: 1});
@@ -554,6 +517,7 @@ describe('The collector lib module', function() {
         };
       });
 
+      searchContactsSpy = sinon.stub().returns(Q.resolve({ total_count: 0 }));
       contactCreateSpy = sinon.spy(function() {
         return Q.when({
           response: {
@@ -583,26 +547,20 @@ describe('The collector lib module', function() {
               CONTACT_ADDED: 'contact:add'
             }
           },
-          search: {
-            searchContacts: searchSpy
-          },
           client: contactClient
         }
       });
 
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
+        expect(searchContactsSpy).to.have.been.calledOnce;
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(forwardSpy).to.not.have.been.called;
         expect(result[0].collected).to.be.false;
         expect(result[0].err.message).to.match(/already collected/);
-
         done();
       }, done);
     });
@@ -610,9 +568,6 @@ describe('The collector lib module', function() {
     it('should publish newly created contact in pubsub if all is OK', function(done) {
       const getUserSpy = sinon.spy(function(userId, callback) {
         callback(null, user);
-      });
-      const searchSpy = sinon.spy(function(query, callback) {
-        callback(null, {total_count: 0});
       });
       const getNewTokenSpy = sinon.spy(function(user, ttl, callback) {
         callback(null, {token: 1});
@@ -624,6 +579,7 @@ describe('The collector lib module', function() {
         };
       });
 
+      searchContactsSpy = sinon.stub().returns(Q.resolve({ total_count: 0 }));
       contactCreateSpy = sinon.spy(function() {
         return Q.when({
           response: {
@@ -653,26 +609,20 @@ describe('The collector lib module', function() {
               CONTACT_ADDED: 'contact:add'
             }
           },
-          search: {
-            searchContacts: searchSpy
-          },
           client: contactClient
         }
       });
 
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
-        expect(searchSpy).to.have.been.calledOnce;
-        expect(searchSpy).to.have.been.calledWith({
-          userId: user.id, bookId: user.id, search: email1
-        });
+        expect(searchContactsSpy).to.have.been.calledOnce;
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.have.been.called;
         expect(forwardSpy).to.have.been.called;
         expect(forwardSpy.firstCall.args[1].vcard[0]).to.equal('vcard');
         expect(result[0].collected).to.be.true;
-
         done();
       }, done);
     });

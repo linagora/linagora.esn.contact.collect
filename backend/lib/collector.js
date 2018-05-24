@@ -45,20 +45,26 @@ module.exports = dependencies => {
 
     const contactId = card.getFirstPropertyValue('uid');
 
-    return checkContactDoesNotExists()
-      .then(checkNotUser)
-      .then(getToken.bind(null, user))
-      .then(createContact)
-      .then(publishContact)
-      .then(() => ({ email, collected: true }))
+    return getToken(user)
+      .then(token =>
+        checkContactDoesNotExists(token)
+          .then(checkNotUser)
+          .then(() => createContact(token))
+          .then(publishContact)
+          .then(() => ({ email, collected: true }))
+      )
       .catch(err => ({ email, collected: false, err}));
 
-    function checkContactDoesNotExists() {
-      return Q.denodeify(contactModule.lib.search.searchContacts)({userId: user.id, bookId: user.id, search: parsedEmail}).then(result => {
-        if (result.total_count !== 0) {
-          throw new Error(`Contact with such email ${parsedEmail} already exists`);
-        }
-      });
+    function checkContactDoesNotExists(token) {
+      return contactModule.lib.client({ ESNToken: token, user })
+        .addressbookHome(user.id)
+        .search({
+          search: parsedEmail
+        }).then(result => {
+          if (result.total_count !== 0) {
+            throw new Error(`Contact with such email ${parsedEmail} already exists`);
+          }
+        });
     }
 
     function checkNotUser() {
@@ -70,7 +76,7 @@ module.exports = dependencies => {
     }
 
     function createContact(token) {
-      return contactModule.lib.client({ ESNToken: token.token, user })
+      return contactModule.lib.client({ ESNToken: token, user })
         .addressbookHome(user.id)
         .addressbook(CONSTANTS.ADDRESSBOOK_NAME)
         .vcard(contactId)
@@ -98,12 +104,12 @@ module.exports = dependencies => {
 
   function getToken(user) {
     return Q.denodeify(userModule.getNewToken)(user, CONSTANTS.TOKEN_TTL)
-      .then(token => {
-        if (!token) {
+      .then(data => {
+        if (!data || !data.token) {
           throw new Error('Can not generate user token to collect contact');
         }
 
-        return token;
+        return data.token;
       });
   }
 
