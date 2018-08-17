@@ -1,24 +1,68 @@
-before_script:
-  - . ~/.nvm/nvm.sh && nvm use 8
-
 stages:
-  - test
+  - prepare
+  - linters
+  - tests
   - deploy_dev
 
-test:
-  stage: test
-  tags:
-    - shell
-    - online.net
-    - mongo
-    - elasticsearch
-    - redis
+.cache-tpl: &cache-tpl
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - node_modules
+    - frontend/components
+  policy: pull
 
+.test-template: &test-template
+  image: node:8
+  tags:
+    - docker
+  cache:
+    <<: *cache-tpl
+  before_script:
+    - npm install -g grunt-cli
+    - 'echo "INFO: NB node packages : $(ls node_modules | wc -l)"'
+    - 'echo "INFO: NB bower packages : $(ls frontend/components | wc -l)"'
+  except:
+    variables:
+      - $SKIP_TESTS
+
+prepare:
+  image: node:8
+  stage: prepare
+  tags:
+    - docker
+  cache:
+    <<: *cache-tpl
+    policy: pull-push
   script:
-   - npm i
-   - npm update
-   - bower i --allow-root
-   - grunt
+    - npm install
+    - npm install -g bower
+    - bower install --allow-root
+    - 'echo "INFO: NB node packages : $(ls node_modules | wc -l)"'
+    - 'echo "INFO: NB bower packages : $(ls frontend/components | wc -l)"'
+  except:
+    variables:
+      - $SKIP_PREPARE
+
+linters:
+  <<: *test-template
+  stage: linters
+  script:
+    - grunt -v linters
+  except:
+    variables:
+      - $SKIP_LINTERS
+
+test-unit-frontend:
+  <<: *test-template
+  stage: tests
+  script:
+    - grunt -v test-unit-frontend
+
+test-unit-backend:
+  <<: *test-template
+  stage: tests
+  script:
+    - grunt -v test-unit-backend
 
 deploy_dev:
   stage: deploy_dev
