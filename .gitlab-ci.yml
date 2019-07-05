@@ -12,7 +12,8 @@ stages:
   policy: pull
 
 .test-template: &test-template
-  image: node:8
+  image: node:10-stretch
+
   tags:
     - docker
   cache:
@@ -26,7 +27,7 @@ stages:
       - $SKIP_TESTS
 
 prepare:
-  image: node:8
+  image: node:10-stretch
   stage: prepare
   tags:
     - docker
