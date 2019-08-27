@@ -4,18 +4,15 @@ const mockery = require('mockery');
 const chai = require('chai');
 const path = require('path');
 const fs = require('fs-extra');
-const mongoose = require('mongoose');
 const testConfig = require('../config/servers-conf');
 const basePath = path.resolve(__dirname + '/../../node_modules/linagora-rse');
 const tmpPath = path.resolve(__dirname + '/../..', testConfig.tmp);
 const backendPath = path.normalize(__dirname + '/../../backend');
 const host = testConfig.host;
-const MODULE_NAME = 'awesome.module.seed';
+const MODULE_NAME = 'linagora.esn.contact.collect';
 let rse;
 
 before(function(done) {
-  mongoose.Promise = require('q').Promise;
-
   chai.use(require('chai-shallow-deep-equal'));
   chai.use(require('sinon-chai'));
   chai.use(require('chai-as-promised'));
@@ -34,7 +31,6 @@ before(function(done) {
       fs.unlinkSync(tmpPath + '/db.json');
     },
     initCore(callback) {
-      mongoose.Promise = require('q').Promise;
       rse.core.init(() => { callback && process.nextTick(callback); });
     }
   };
