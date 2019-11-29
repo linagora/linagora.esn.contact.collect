@@ -57,9 +57,9 @@ module.exports = dependencies => {
 
     function checkContactDoesNotExists(token) {
       return contactModule.lib.client({ ESNToken: token, user })
-        .addressbookHome(user.id)
-        .search({
-          search: parsedEmail
+        .searchContacts({
+          search: parsedEmail,
+          user
         }).then(result => {
           if (result.total_count !== 0) {
             throw new Error(`Contact with such email ${parsedEmail} already exists`);
