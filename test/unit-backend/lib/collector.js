@@ -28,10 +28,10 @@ describe('The collector lib module', function() {
                   };
                 }
               };
-            },
-            search: searchContactsSpy
+            }
           };
-        }
+        },
+        searchContacts: searchContactsSpy
       };
     };
     collector = require('../../../backend/lib/collector');
@@ -311,11 +311,12 @@ describe('The collector lib module', function() {
         }
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails }).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
         expect(searchContactsSpy).to.have.been.calledOnce;
         expect(searchContactsSpy).to.have.been.calledWith({
-          search: email1
+          search: email1,
+          user
         });
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
@@ -359,7 +360,7 @@ describe('The collector lib module', function() {
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
         expect(searchContactsSpy).to.have.been.calledOnce;
-        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1, user });
         expect(contactCreateSpy).to.not.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(result[0].collected).to.be.false;
@@ -448,7 +449,7 @@ describe('The collector lib module', function() {
         }
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails }).then(function(result) {
         expect(result.length).to.equal(1);
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
         expect(searchContactsSpy).to.have.been.calledOnce;
@@ -490,10 +491,10 @@ describe('The collector lib module', function() {
         }
       });
 
-      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
+      collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails }).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
         expect(searchContactsSpy).to.have.been.calledOnce;
-        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1, user });
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.not.have.been.called;
         expect(getNewTokenSpy).to.have.been.calledWith(user);
@@ -554,7 +555,7 @@ describe('The collector lib module', function() {
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
         expect(searchContactsSpy).to.have.been.calledOnce;
-        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1, user });
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.not.have.been.called;
@@ -616,7 +617,7 @@ describe('The collector lib module', function() {
       collector(this.moduleHelpers.dependencies).collect({ userId: userId, emails: emails}).then(function(result) {
         expect(getUserSpy).to.have.been.calledWith(userId, sinon.match.func);
         expect(searchContactsSpy).to.have.been.calledOnce;
-        expect(searchContactsSpy).to.have.been.calledWith({ search: email1 });
+        expect(searchContactsSpy).to.have.been.calledWith({ search: email1, user });
         expect(getNewTokenSpy).to.have.been.calledWith(user);
         expect(contactCreateSpy).to.have.been.called;
         expect(topicSpy).to.have.been.called;
