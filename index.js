@@ -10,7 +10,7 @@ const AWESOME_MODULE_NAME = `linagora.esn.${MODULE_NAME}`;
 
 const collectModule = new AwesomeModule(AWESOME_MODULE_NAME, {
   dependencies: [
-    new Dependency(Dependency.TYPE_NAME, 'linagora.esn.core.amqp', 'amqpClientProvider'),
+    new Dependency(Dependency.TYPE_NAME, 'linagora.esn.core.messaging', 'messaging'),
     new Dependency(Dependency.TYPE_NAME, 'linagora.esn.contact', 'contact'),
     new Dependency(Dependency.TYPE_NAME, 'linagora.esn.core.user', 'user'),
     new Dependency(Dependency.TYPE_NAME, 'linagora.esn.core.logger', 'logger'),
@@ -51,7 +51,7 @@ const collectModule = new AwesomeModule(AWESOME_MODULE_NAME, {
     },
 
     start: function(dependencies, callback) {
-      this.amqpListener.start();
+      this.listener.start();
       callback();
     }
   }
