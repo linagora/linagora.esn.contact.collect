@@ -13,6 +13,8 @@ const MODULE_NAME = 'linagora.esn.contact.collect';
 let rse;
 
 before(function(done) {
+  const self = this;
+
   chai.use(require('chai-shallow-deep-equal'));
   chai.use(require('sinon-chai'));
   chai.use(require('chai-as-promised'));
@@ -24,12 +26,19 @@ before(function(done) {
     backendPath: backendPath,
     fixtures: path.resolve(basePath, 'test/midway-backend/fixtures'),
     mongoUrl: 'mongodb://' + host + ':' + testConfig.mongodb.port + '/' + testConfig.mongodb.dbname,
+    mongoConnectionOptions: testConfig.mongodb.connectionOptions,
+
     writeDBConfigFile() {
-      fs.writeFileSync(tmpPath + '/db.json', JSON.stringify({connectionString: 'mongodb://' + host + ':' + testConfig.mongodb.port + '/' + testConfig.mongodb.dbname, connectionOptions: {auto_reconnect: false}}));
+      fs.writeFileSync(tmpPath + '/db.json', JSON.stringify({
+        connectionString: `mongodb://${host}:${testConfig.mongodb.port}/${testConfig.mongodb.dbname}`,
+        connectionOptions: self.testEnv.mongoConnectionOptions
+      }));
     },
+
     removeDBConfigFile() {
       fs.unlinkSync(tmpPath + '/db.json');
     },
+
     initCore(callback) {
       rse.core.init(() => { callback && process.nextTick(callback); });
     }
