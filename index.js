@@ -4,7 +4,8 @@ const AwesomeModule = require('awesome-module');
 const Dependency = AwesomeModule.AwesomeModuleDependency;
 const glob = require('glob-all');
 
-const FRONTEND_PATH = `${__dirname}/frontend/app/`;
+const FRONTEND_JS_PATH = `${__dirname}/frontend/app/`;
+const FRONTEND_JS_PATH_BUILD = __dirname + '/dist/';
 const MODULE_NAME = 'contact.collect';
 const AWESOME_MODULE_NAME = `linagora.esn.${MODULE_NAME}`;
 
@@ -33,15 +34,24 @@ const collectModule = new AwesomeModule(AWESOME_MODULE_NAME, {
       const app = require('./backend/webserver/application')(dependencies, this);
 
       // Register every exposed frontend scripts
-      const frontendJsFilesFullPath = glob.sync([
-        `${FRONTEND_PATH}**/*.module.js`,
-        `${FRONTEND_PATH}**/!(*spec).js`
-      ]);
-      const appFilesUri = frontendJsFilesFullPath.map(filePath => {
-        return filePath.replace(FRONTEND_PATH, '');
-      });
+      let frontendJsFilesFullPath, frontendJsFilesUri;
 
-      webserverWrapper.injectAngularAppModules(MODULE_NAME, appFilesUri, AWESOME_MODULE_NAME, ['esn'], {
+      if (process.env.NODE_ENV !== 'production') {
+        frontendJsFilesFullPath = glob.sync([
+          FRONTEND_JS_PATH + '**/*.module.js',
+          FRONTEND_JS_PATH + '**/!(*spec).js'
+        ]);
+
+        frontendJsFilesUri = frontendJsFilesFullPath.map(filepath => filepath.replace(FRONTEND_JS_PATH, ''));
+      } else {
+        frontendJsFilesFullPath = glob.sync([
+          FRONTEND_JS_PATH_BUILD + '*.js'
+        ]);
+
+        frontendJsFilesUri = frontendJsFilesFullPath.map(filepath => filepath.replace(FRONTEND_JS_PATH_BUILD, ''));
+      }
+
+      webserverWrapper.injectAngularAppModules(MODULE_NAME, frontendJsFilesUri, AWESOME_MODULE_NAME, ['esn'], {
         localJsFiles: frontendJsFilesFullPath
       });
 
