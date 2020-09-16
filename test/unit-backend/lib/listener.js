@@ -4,11 +4,10 @@ const mockery = require('mockery');
 const CONSTANTS = require('../../../backend/lib/constants');
 
 describe('The listener lib module', function() {
-  let message, context, pointToPoint;
+  let message, pointToPoint;
 
   beforeEach(function() {
     message = { id: 1 };
-    context = { ack: sinon.spy() };
     this.requireModule = function() {
       return require('../../../backend/lib/listener')(this.moduleHelpers.dependencies);
     };
@@ -29,7 +28,7 @@ describe('The listener lib module', function() {
     });
 
     it('should subscribe to "collect:emails" pointToPointMessaging', function() {
-      mockery.registerMock('./handler', () => {});
+      mockery.registerMock('./handler', () => ({ handle: () => {} }));
 
       this.requireModule().start();
 
@@ -38,7 +37,7 @@ describe('The listener lib module', function() {
     });
 
     describe('onMessage handler', function() {
-      it('should collect message and ack it when handler resolves', function(done) {
+      it('should handle message to collect email', function(done) {
         const handleSpy = sinon.stub().returns(Promise.resolve());
 
         mockery.registerMock('./handler', () => ({
@@ -47,30 +46,9 @@ describe('The listener lib module', function() {
 
         this.requireModule().start();
 
-        receive.getCall(0).args[0](message, context)
+        receive.getCall(0).args[0](message)
           .then(() => {
             expect(handleSpy).to.have.been.calledWith(message);
-            expect(context.ack).to.have.been.calledOnce;
-            done();
-          })
-          .catch(done);
-      });
-
-      it('should not ack the message when collector rejects', function(done) {
-        const handleSpy = sinon.stub().returns(Promise.reject(new Error('I failed to collect data')));
-
-        mockery.registerMock('./handler', function() {
-          return {
-            handle: handleSpy
-          };
-        });
-
-        this.requireModule().start();
-
-        receive.getCall(0).args[0](message, context)
-          .then(() => {
-            expect(handleSpy).to.have.been.calledWith(message);
-            expect(context.ack).to.not.have.been.called;
             done();
           })
           .catch(done);
