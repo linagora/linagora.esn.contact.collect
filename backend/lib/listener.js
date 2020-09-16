@@ -11,12 +11,6 @@ module.exports = dependencies => {
 
   function start() {
     logger.info(`Starting pointToPointMessaging on "${EXCHANGE_NAME}" exchange`);
-    pointToPointMessaging.get(EXCHANGE_NAME).receive(onMessage);
-  }
-
-  function onMessage(message, context) {
-    return handler.handle(message)
-      .then(() => context.ack())
-      .catch(err => logger.debug('Error while collecting contacts', err));
+    pointToPointMessaging.get(EXCHANGE_NAME).receive(handler.handle);
   }
 };
